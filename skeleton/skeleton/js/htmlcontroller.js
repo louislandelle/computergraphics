@@ -33,6 +33,7 @@ HtmlController.prototype.onDocumentMouseDown = function(event)
 HtmlController.prototype.onDocumentMouseMove = function(event)
 {
     // window.console.log("mouse move");
+    this.sceneController.adjustCamera();
 };
 
 HtmlController.prototype.onDocumentMouseUp = function(event)

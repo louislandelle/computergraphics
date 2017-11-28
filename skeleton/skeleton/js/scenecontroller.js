@@ -259,6 +259,16 @@ SceneController.prototype.setupLight = function()
 
 SceneController.prototype.adjustCamera = function()
 {
+    this.camera.fov = this.cameraParams.fov;
+    this.camera.near = this.cameraParams.near;
+    this.camera.far = this.cameraParams.far;
+    this.camera.aspect = this.cameraParams.aspectRatio;
+    this.setCameraView();
+    /*
+    this.camera.pos = new THREE.Vector3(this.cameraParams.eyeX, this.cameraParams.eyeY, this.cameraParams.eyeZ);
+    this.camera.up = new THREE.Vector3(this.cameraParams.upX, this.cameraParams.upY, this.cameraParams.upZ);
+    this.camera.lookAt(this.cameraParams.atX, this.cameraParams.atY, this.cameraParams.atZ);*/
+    this.camera.updateProjectionMatrix();
 };
 
 SceneController.prototype.adjustModel = function()
