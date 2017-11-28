@@ -91,29 +91,36 @@ SceneController.prototype.setupGUI = function()
         upZ: 0
     };
 
+	var refresh = function(v){
+			this.adjustCamera();
+			this.adjustClipView();
+			this.adjustModel();
+	}.bind(this);
+
     var modelGui = this.gui.addFolder('model manipulation');
-    modelGui.add( this.modelParams, "transx", -20.0, 20.0 ).name("X translation");
-    modelGui.add( this.modelParams, "transy", -20.0, 20.0 ).name("Y translation");
-    modelGui.add( this.modelParams, "transz", -20.0, 20.0 ).name("Z translation");
-    modelGui.add( this.modelParams, "rotx", 0, 360.0 ).name("X rotation");
-    modelGui.add( this.modelParams, "roty", 0, 360.0 ).name("Y rotation");
-    modelGui.add( this.modelParams, "rotz", 0, 360.0 ).name("Z rotation");
-    modelGui.add( this.modelParams, "scale", 0.1, 2.0 ).name("Scale");
+    modelGui.add( this.modelParams, "transx", -20.0, 20.0 ).name("X translation").onChange(refresh);
+    modelGui.add( this.modelParams, "transy", -20.0, 20.0 ).name("Y translation").onChange(refresh);
+    modelGui.add( this.modelParams, "transz", -20.0, 20.0 ).name("Z translation").onChange(refresh);
+    modelGui.add( this.modelParams, "rotx", 0, 360.0 ).name("X rotation").onChange(refresh);
+    modelGui.add( this.modelParams, "roty", 0, 360.0 ).name("Y rotation").onChange(refresh);
+    modelGui.add( this.modelParams, "rotz", 0, 360.0 ).name("Z rotation").onChange(refresh);
+    modelGui.add( this.modelParams, "scale", 0.1, 2.0 ).name("Scale").onChange(refresh);
+
 
     var cameraGui = this.gui.addFolder('camera');
-    cameraGui.add(this.cameraParams,'fov',1,179);
-    cameraGui.add(this.cameraParams,'aspectRatio',0.1,10);
-    cameraGui.add(this.cameraParams,'near',0.01,50);
-    cameraGui.add(this.cameraParams,'far',0.01,50);
-    cameraGui.add(this.cameraParams,'atX',-10,10);
-    cameraGui.add(this.cameraParams,'atY',-10,10);
-    cameraGui.add(this.cameraParams,'atZ',-10,10);
-    cameraGui.add(this.cameraParams,'eyeX',-10,10);
-    cameraGui.add(this.cameraParams,'eyeY',-10,10);
-    cameraGui.add(this.cameraParams,'eyeZ',-30,30);
-    cameraGui.add(this.cameraParams,'upX',-10,10);
-    cameraGui.add(this.cameraParams,'upY',-10,10);
-    cameraGui.add(this.cameraParams,'upZ',-10,10);
+    cameraGui.add(this.cameraParams,'fov',1,179).onChange(refresh);
+    cameraGui.add(this.cameraParams,'aspectRatio',0.1,10).onChange(refresh);
+    cameraGui.add(this.cameraParams,'near',0.01,50).onChange(refresh);
+    cameraGui.add(this.cameraParams,'far',0.01,50).onChange(refresh);
+    cameraGui.add(this.cameraParams,'atX',-10,10).onChange(refresh);
+    cameraGui.add(this.cameraParams,'atY',-10,10).onChange(refresh);
+    cameraGui.add(this.cameraParams,'atZ',-10,10).onChange(refresh);
+    cameraGui.add(this.cameraParams,'eyeX',-10,10).onChange(refresh);
+    cameraGui.add(this.cameraParams,'eyeY',-10,10).onChange(refresh);
+    cameraGui.add(this.cameraParams,'eyeZ',-30,30).onChange(refresh);
+    cameraGui.add(this.cameraParams,'upX',-10,10).onChange(refresh);
+    cameraGui.add(this.cameraParams,'upY',-10,10).onChange(refresh);
+    cameraGui.add(this.cameraParams,'upZ',-10,10).onChange(refresh);
 
     this.gui.add( this.otherParams, "sceneAxes" ).name("World axes");
     this.gui.add( this.otherParams, "clipAxes" ).name("Clipping axes");
@@ -259,24 +266,47 @@ SceneController.prototype.setupLight = function()
 
 SceneController.prototype.adjustCamera = function()
 {
-    this.camera.fov = this.cameraParams.fov;
-    this.camera.near = this.cameraParams.near;
-    this.camera.far = this.cameraParams.far;
-    this.camera.aspect = this.cameraParams.aspectRatio;
-    this.setCameraView();
-    /*
-    this.camera.pos = new THREE.Vector3(this.cameraParams.eyeX, this.cameraParams.eyeY, this.cameraParams.eyeZ);
-    this.camera.up = new THREE.Vector3(this.cameraParams.upX, this.cameraParams.upY, this.cameraParams.upZ);
-    this.camera.lookAt(this.cameraParams.atX, this.cameraParams.atY, this.cameraParams.atZ);*/
-    this.camera.updateProjectionMatrix();
+	this.scene.remove(this.perspectiveCameraHelper);
+	this.screenScene.remove(this.perspectiveCamera);		
+	
+	var fov    = this.cameraParams.fov || 70;  // in degrees
+	var aspect = this.cameraParams.aspectRatio || (window.innerWidth / window.innerHeight / 3);  // canvas width/height
+	var near   = this.cameraParams.near ||  5;  // measured from eye
+	var far    = this.cameraParams.far  || 30;  // measured from eye
+
+	this.perspectiveCamera = new THREE.PerspectiveCamera( fov, aspect, near, far);
+	this.setCameraView();
+
+	this.perspectiveCamera.position.copy(this.eye);
+	this.perspectiveCamera.up.copy(this.up);
+	this.perspectiveCamera.lookAt(this.at);
+
+	this.perspectiveCameraHelper = new THREE.CameraHelper(this.perspectiveCamera);
+
+	this.scene.add(this.perspectiveCameraHelper);
+	this.screenScene.add(this.perspectiveCamera);
 };
 
 SceneController.prototype.adjustModel = function()
 {
+	this.bear.position.set(this.modelParams.transx, this.modelParams.transy, this.modelParams.transz);
+	this.bear.rotation.set(degToRad(this.modelParams.rotx), degToRad(this.modelParams.roty), degToRad(this.modelParams.rotz));
+	this.bear.scale.set(this.modelParams.scale, this.modelParams.scale, this.modelParams.scale);
+	this.bear3.position.set(this.modelParams.transx, this.modelParams.transy, this.modelParams.transz);
+	this.bear3.rotation.set(degToRad(this.modelParams.rotx), degToRad(this.modelParams.roty), degToRad(this.modelParams.rotz));
+	this.bear3.scale.set(this.modelParams.scale, this.modelParams.scale, this.modelParams.scale);
 };
 
 SceneController.prototype.adjustClipView = function()
 {
+    var frustumSize = 3;
+    this.clipCamera = new THREE.OrthographicCamera( frustumSize * this.cameraParams.aspect / - 2, frustumSize * this.cameraParams.aspect / 2,
+        frustumSize / 2, frustumSize / - 2, this.cameraParams.near, this.cameraParams.far);
+    this.clipCamera.position.x = - 3;
+    this.clipCamera.position.y = 3;
+    this.clipCamera.position.z = 10;
+    this.clipCamera.lookAt(this.clipScene.position);
+    //this.clipScene.add(this.clipCamera);
 };
 
 SceneController.prototype.render = function()
