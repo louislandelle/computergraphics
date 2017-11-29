@@ -4,6 +4,7 @@ var SceneController = function(document)
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color( 0xffffff );
     this.renderer = new THREE.WebGLRenderer( { antialias: true } );
+    this.renderer.clippingPlanes = [new THREE.Plane(new THREE.Vector3(0, 1, 0), 10)];
 
     // clip space
     this.clipScene= new THREE.Scene();
@@ -53,6 +54,7 @@ SceneController.prototype.setupGUI = function()
 {
     this.otherParams = {
         clipAxes: false,
+        clippingPlanes: false,
         sceneAxes: false,
         enableSceneOrbit: true,
         enableClipOrbit: true,
@@ -123,6 +125,7 @@ SceneController.prototype.setupGUI = function()
 
     this.gui.add( this.otherParams, "sceneAxes" ).name("World axes");
     this.gui.add( this.otherParams, "clipAxes" ).name("Clipping axes");
+    this.gui.add( this.otherParams, "clippingPlanes" ).name("Clipping planes");
     this.gui.add( this.otherParams, "enableSceneOrbit" ).name("Scene orbit control");
 
     var slerpGui = this.gui.addFolder('slerp');
@@ -173,7 +176,7 @@ SceneController.prototype.setupCamera = function()
     var frustumSize = 3;
     this.clipCamera = new THREE.OrthographicCamera( frustumSize * aspect / - 2, frustumSize * aspect / 2,
         frustumSize / 2, frustumSize / - 2, near, far);
-    this.clipCamera.position.x = - 3;
+    this.clipCamera.position.x = -3;
     this.clipCamera.position.y = 3;
     this.clipCamera.position.z = 10;
     this.clipCamera.lookAt(this.clipScene.position);
@@ -245,6 +248,9 @@ SceneController.prototype.setupGeometry = function()
     var wireframe = new THREE.LineSegments( geo, cubeMat);
     this.clipScene.add( wireframe );
 
+    this.bear2 = createTeddyBear(this.params);
+    this.clipScene.add(this.bear2);
+
     this.bear3 = createTeddyBear(this.params);
     this.screenScene.add(this.bear3);
 };
@@ -292,17 +298,34 @@ SceneController.prototype.adjustModel = function()
 	this.bear.position.set(this.modelParams.transx, this.modelParams.transy, this.modelParams.transz);
 	this.bear.rotation.set(degToRad(this.modelParams.rotx), degToRad(this.modelParams.roty), degToRad(this.modelParams.rotz));
 	this.bear.scale.set(this.modelParams.scale, this.modelParams.scale, this.modelParams.scale);
+	this.bear2.position.set(this.modelParams.transx, this.modelParams.transy, this.modelParams.transz);
+	this.bear2.rotation.set(degToRad(this.modelParams.rotx), degToRad(this.modelParams.roty), degToRad(this.modelParams.rotz));
+    this.bear2.scale.set(this.modelParams.scale, this.modelParams.scale, this.modelParams.scale);
+    var testmatrix = (new THREE.Matrix4()).makeScale(1, 2, 1);
+    this.transformBear(this.bear2, testmatrix);    
 	this.bear3.position.set(this.modelParams.transx, this.modelParams.transy, this.modelParams.transz);
 	this.bear3.rotation.set(degToRad(this.modelParams.rotx), degToRad(this.modelParams.roty), degToRad(this.modelParams.rotz));
 	this.bear3.scale.set(this.modelParams.scale, this.modelParams.scale, this.modelParams.scale);
 };
 
+SceneController.prototype.transformBear = function(bear, matrix){
+    bear.traverse(x => {
+        if (x instanceof THREE.Mesh)
+            x.applyMatrix(matrix);
+    });
+};
+
 SceneController.prototype.adjustClipView = function()
-{
+{    
     var frustumSize = 3;
-    this.clipCamera = new THREE.OrthographicCamera( frustumSize * this.cameraParams.aspect / - 2, frustumSize * this.cameraParams.aspect / 2,
-        frustumSize / 2, frustumSize / - 2, this.cameraParams.near, this.cameraParams.far);
-    this.clipCamera.position.x = - 3;
+    //this.clipScene.remove(this.clipCamera);
+    this.clipCamera = new THREE.OrthographicCamera(
+        frustumSize * this.cameraParams.aspectRatio / - 2,
+        frustumSize * this.cameraParams.aspectRatio / 2,
+        frustumSize / 2, frustumSize / - 2,
+        this.cameraParams.near,
+        this.cameraParams.far);
+    this.clipCamera.position.x = -3;
     this.clipCamera.position.y = 3;
     this.clipCamera.position.z = 10;
     this.clipCamera.lookAt(this.clipScene.position);

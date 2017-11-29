@@ -19,7 +19,13 @@ HtmlController.prototype.onWindowResize = function()
     this.sceneController.camera.aspect = window.innerWidth / window.innerHeight;
     this.sceneController.camera.updateProjectionMatrix();
 
-    this.sceneController.renderer.setSize( window.innerWidth, window.innerHeight);
+    this.sceneController.renderer.setSize( window.innerWidth / 3 - 5, window.innerHeight - 20);
+    this.sceneController.clipRenderer.setSize( window.innerWidth / 3 - 5, window.innerHeight - 20);
+    this.sceneController.screenRenderer.setSize( window.innerWidth / 3 - 5, window.innerHeight - 20);
+    
+    this.sceneController.camera.aspect = window.innerWidth / window.innerHeight;
+    this.sceneController.clipCamera.aspect = window.innerWidth / window.innerHeight;
+    this.sceneController.screenCamera.aspect = window.innerWidth / window.innerHeight;
     this.sceneController.render();
 };
 
