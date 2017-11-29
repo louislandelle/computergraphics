@@ -106,7 +106,6 @@ SceneController.prototype.setupGUI = function()
     modelGui.add( this.modelParams, "rotz", 0, 360.0 ).name("Z rotation").onChange(refresh);
     modelGui.add( this.modelParams, "scale", 0.1, 2.0 ).name("Scale").onChange(refresh);
 
-
     var cameraGui = this.gui.addFolder('camera');
     cameraGui.add(this.cameraParams,'fov',1,179).onChange(refresh);
     cameraGui.add(this.cameraParams,'aspectRatio',0.1,10).onChange(refresh);
@@ -267,7 +266,7 @@ SceneController.prototype.setupLight = function()
 SceneController.prototype.adjustCamera = function()
 {
 	this.scene.remove(this.perspectiveCameraHelper);
-	this.screenScene.remove(this.perspectiveCamera);		
+	this.screenScene.remove(this.perspectiveCamera);
 	
 	var fov    = this.cameraParams.fov || 70;  // in degrees
 	var aspect = this.cameraParams.aspectRatio || (window.innerWidth / window.innerHeight / 3);  // canvas width/height
@@ -283,6 +282,7 @@ SceneController.prototype.adjustCamera = function()
 
 	this.perspectiveCameraHelper = new THREE.CameraHelper(this.perspectiveCamera);
 
+	this.perspectiveCamera.updateProjectionMatrix();
 	this.scene.add(this.perspectiveCameraHelper);
 	this.screenScene.add(this.perspectiveCamera);
 };
@@ -306,6 +306,7 @@ SceneController.prototype.adjustClipView = function()
     this.clipCamera.position.y = 3;
     this.clipCamera.position.z = 10;
     this.clipCamera.lookAt(this.clipScene.position);
+    this.clipCamera.updateProjectionMatrix();
     //this.clipScene.add(this.clipCamera);
 };
 
@@ -317,7 +318,7 @@ SceneController.prototype.render = function()
     this.clipAxes.visible = this.otherParams.clipAxes;
     this.clipRenderer.render(this.clipScene, this.clipCamera);
 
-    this.screenRenderer.render( this.screenScene, this.camera);
+    this.screenRenderer.render( this.screenScene, this.perspectiveCamera);
 
     this.stats.update();
 };
